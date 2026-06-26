@@ -112,8 +112,17 @@ export default function SpikeChart({
           ))}
           <ReferenceLine
             x={reformWeek} stroke="hsl(4 78% 52%)" strokeWidth={1.5} strokeDasharray="4 3"
-            label={{ value: "Reformulation", fontSize: 11, fill: "hsl(4 78% 52%)",
-                     position: "insideTopRight", offset: 8 }}
+            label={(props: any) => {
+              const { viewBox } = props;
+              return (
+                <text
+                  x={viewBox.x + 6} y={viewBox.y + 11}
+                  fill="hsl(4 78% 52%)" fontSize={11} textAnchor="start"
+                >
+                  Reformulation
+                </text>
+              );
+            }}
           />
         </BarChart>
       </ResponsiveContainer>
