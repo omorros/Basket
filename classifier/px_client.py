@@ -129,6 +129,15 @@ def _rows_from_results(results: object) -> List[list]:
     return out
 
 
+def _rows_from_run(result: object, predicate: str) -> List[list]:
+    """Pull computed rows out of run_concept's response (evaluation_results.resultSet)."""
+    try:
+        rs = result["evaluation_results"]["resultSet"][predicate]  # type: ignore[index]
+        return [list(row) for row in rs]
+    except (KeyError, TypeError, IndexError):
+        return []
+
+
 class RealPxClient:
     """Real Prometheux engine via prometheux_chain. Same interface as MockPxClient.
 
@@ -177,9 +186,17 @@ class RealPxClient:
         return rows
 
     def run(self) -> None:
-        self._px.run_concept(project_id=self._project, concept_name="classified")
+        # run_concept returns the computed rows inline under evaluation_results.
+        # We read them directly: the separate fetch_results endpoint is broken
+        # server-side (PATH_NOT_FOUND on a disk path that is never written).
+        result = self._px.run_concept(project_id=self._project, concept_name="classified")
         # engine output rows: [Url, Variant, Category, Phrase, Date, ReformDate, Phase]
-        engine = self._fetch_all("classified")
+        engine = _rows_from_run(result, "classified")
+        if not engine:  # fallback to the (currently broken) fetch path, just in case
+            try:
+                engine = self._fetch_all("classified")
+            except Exception:
+                engine = []
         by_url: Dict[str, List[list]] = {}
         for row in engine:
             if len(row) >= 7:
