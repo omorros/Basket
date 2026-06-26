@@ -40,8 +40,19 @@ USE_STUB_PUBLISHER = os.environ.get("USE_STUB_PUBLISHER", "true").lower() == "tr
 USE_REAL_CLASSIFIER = os.environ.get("USE_REAL_CLASSIFIER", "false").lower() == "true"
 # Threshold below which we don't bother publishing an alert.
 PUBLISH_MIN_SEVERITY = 1.2
-# Keeps the demo deterministic if the Date-Finder can't pin a date live.
-FALLBACK_DATES = {"reese's peanut butter cups": "2026-02-17"}
+# Validated/documented reformulation dates -> deterministic, aligned charts.
+# Recent events (2025-26) align best with live data; older ones are best-effort.
+FALLBACK_DATES = {
+    "reese's peanut butter cups": "2026-02-17",
+    "m&m's": "2026-06-19",
+    "walkers crisps": "2025-08-12",
+    "walkers": "2025-08-12",
+    "cadbury dairy milk": "2024-01-01",
+    "doritos": "2025-01-01",
+    "toblerone": "2016-11-08",
+    "quality street": "2022-10-03",
+    "heinz ketchup": "2023-06-01",
+}
 
 app = FastAPI(title="Reformulation Sentinel — Orchestrator")
 app.add_middleware(
