@@ -30,3 +30,10 @@
   }
   .tnum { font-variant-numeric: tabular-nums; }
 }
+
+/* Indeterminate progress sweep — reads as "working" for any duration. */
+@keyframes sentinel-sweep {
+  0%   { transform: translateX(-110%); }
+  100% { transform: translateX(360%); }
+}
+.sentinel-sweep { animation: sentinel-sweep 1.4s ease-in-out infinite; }
