@@ -11,28 +11,35 @@ class Seeds:
 
 CATEGORY_PRECEDENCE = ["taste", "texture", "packaging", "price"]
 
-# Placeholder demo product. Replace with the chosen product's real aliases,
-# documented reformulation date, and tuned markers before the demo.
+# Locked demo product (TEAM.md, validated): Reese's Peanut Butter Cups (Hershey).
+# 2026 reformulation: milk chocolate -> cheaper compound coating. Accusation breaks
+# ~2026-02-17 (the reform date complaints are measured against); Hershey U-turns ~2026-04-01.
 DEMO_SEEDS = Seeds(
     aliases=[
-        ("coke zero", "coke-zero-2017"),
-        ("coca-cola zero sugar", "coke-zero-2017"),
-        ("diet coke zero", "coke-zero-2017"),
-        ("coca cola zero", "coke-zero-2017"),
+        ("reese's peanut butter cups", "reeses-compound-2026"),
+        ("reeses peanut butter cups", "reeses-compound-2026"),
+        ("reese's cups", "reeses-compound-2026"),
+        ("reese's", "reeses-compound-2026"),
+        ("reeses", "reeses-compound-2026"),
     ],
     supersedes=[
-        ("coke-zero-2017", "coke-zero-2016", "2017-04-01"),
+        ("reeses-compound-2026", "reeses-classic", "2026-02-17"),
     ],
     markers=[
-        ("tastes like chemicals", "taste"),
-        ("new recipe", "taste"),
+        ("tastes different", "taste"),
+        ("tastes waxy", "taste"),
+        ("tastes like wax", "taste"),
         ("changed the recipe", "taste"),
         ("doesn't taste the same", "taste"),
-        ("tastes different", "taste"),
-        ("watery", "texture"),
-        ("flat", "texture"),
-        ("new can", "packaging"),
-        ("new bottle", "packaging"),
+        ("not real chocolate", "taste"),
+        ("fake chocolate", "taste"),
+        ("compound coating", "taste"),
+        ("waxy", "texture"),
+        ("greasy", "texture"),
+        ("chalky", "texture"),
+        ("new packaging", "packaging"),
+        ("new wrapper", "packaging"),
+        ("shrinkflation", "price"),
         ("price went up", "price"),
         ("too expensive", "price"),
     ],
