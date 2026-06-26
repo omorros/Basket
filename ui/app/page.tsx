@@ -75,6 +75,21 @@ export default function Home() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-20">
       <header className="mb-12 animate-in fade-in slide-in-from-bottom-3 fill-mode-both duration-700">
+        <div className="mb-10 flex items-center gap-2.5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/basket-icon.png"
+            alt="Basket"
+            className="h-12 w-12"
+            style={{ mixBlendMode: "multiply" }}
+          />
+          <span
+            className="text-3xl font-semibold tracking-tight"
+            style={{ color: "#0B1834" }}
+          >
+            basket
+          </span>
+        </div>
         <p className="mb-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Reformulation Sentinel
         </p>
@@ -189,10 +204,11 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <a
-                  href={data.cited_url} target="_blank" rel="noreferrer"
-                  className="text-sm font-medium text-primary hover:underline"
+                  href={`/alert/${data.product.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}?p=${encodeURIComponent(data.product)}`}
+                  target="_blank" rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
                 >
-                  {data.cited_url}
+                  View published report ↗
                 </a>
               </CardContent>
             </Card>

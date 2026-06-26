@@ -2,7 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Reformulation Sentinel",
+  title: "Basket — Reformulation Sentinel",
   description: "Catch a botched product reformulation while the complaints are still fresh.",
 };
 
