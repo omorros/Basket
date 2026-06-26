@@ -30,9 +30,9 @@ export default function ReviewTrace({
       {/* evidence list */}
       <div>
         <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Evidence
+          Evidence · {reviews.length}
         </p>
-        <div className="space-y-1.5">
+        <div className="max-h-[400px] space-y-1.5 overflow-y-auto pr-1">
           {reviews.map((rv, i) => (
             <button
               key={rv.url}
@@ -57,7 +57,7 @@ export default function ReviewTrace({
       </div>
 
       {/* the reasoning */}
-      <div>
+      <div className="md:sticky md:top-6 md:self-start">
         <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Why it was counted
         </p>

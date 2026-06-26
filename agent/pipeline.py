@@ -46,14 +46,22 @@ def run(product: str) -> dict:
         buckets = bucket_by_week(classified)
         inflection = detect_inflection(buckets, reform_date)
 
-    # Reviews for the UI: complaints with a date + a fired rule, newest first.
-    shown = [c for c in classified if c.complaint_category != "none" and c.published_date]
-    shown.sort(key=lambda c: c.published_date or "", reverse=True)
+    # Reviews for the UI: complaints with a date + a fired rule, newest first,
+    # de-duplicated by excerpt (syndicated news repeats the same snippet).
+    candidates = [c for c in classified if c.complaint_category != "none" and c.published_date]
+    candidates.sort(key=lambda c: c.published_date or "", reverse=True)
+    shown, seen_excerpts = [], set()
+    for c in candidates:
+        key = " ".join((c.raw_excerpt or "").lower().split())[:100]
+        if key in seen_excerpts:
+            continue
+        seen_excerpts.add(key)
+        shown.append(c)
 
     return {
         "product": product,
         "reformulation_date": inflection.reformulation_date,
-        "reviews": [c.to_dict() for c in shown[:12]],
+        "reviews": [c.to_dict() for c in shown[:8]],
         "buckets": [b.__dict__ for b in buckets],
         "inflection": inflection.__dict__,
         # cited.md publish is Teammate B's Agent 5 — placeholder until the API is confirmed.
