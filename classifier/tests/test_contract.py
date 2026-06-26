@@ -4,7 +4,7 @@ from classifier.contract import validate_classified, VALID_CATEGORIES
 
 def _good_row():
     return {
-        "url": "https://r/1", "variant_id": "coke-zero-2017",
+        "url": "https://r/1", "variant_id": "reeses-compound-2026",
         "complaint_category": "taste", "published_date": "2017-05-12",
         "rule_trace": ["matched alias", "taste marker"], "raw_excerpt": "tastes weird",
     }

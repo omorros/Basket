@@ -40,9 +40,9 @@ from classifier.contract import validate_classified, VALID_CATEGORIES
 
 def _good_row():
     return {
-        "url": "https://r/1", "variant_id": "coke-zero-2017",
-        "complaint_category": "taste", "published_date": "2017-05-12",
-        "rule_trace": ["matched alias", "taste marker"], "raw_excerpt": "tastes weird",
+        "url": "https://r/1", "variant_id": "reeses-compound-2026",
+        "complaint_category": "taste", "published_date": "2026-03-01",
+        "rule_trace": ["matched alias", "taste marker"], "raw_excerpt": "tastes waxy",
     }
 
 def test_valid_row_passes():
@@ -175,28 +175,35 @@ class Seeds:
 
 CATEGORY_PRECEDENCE = ["taste", "texture", "packaging", "price"]
 
-# Placeholder demo product. Replace with the chosen product's real aliases,
-# documented reformulation date, and tuned markers before the demo.
+# Locked demo product (TEAM.md, validated): Reese's Peanut Butter Cups (Hershey).
+# 2026 reformulation: milk chocolate -> cheaper compound coating. Accusation breaks
+# ~2026-02-17 (the reform date complaints are measured against); Hershey U-turns ~2026-04-01.
 DEMO_SEEDS = Seeds(
     aliases=[
-        ("coke zero", "coke-zero-2017"),
-        ("coca-cola zero sugar", "coke-zero-2017"),
-        ("diet coke zero", "coke-zero-2017"),
-        ("coca cola zero", "coke-zero-2017"),
+        ("reese's peanut butter cups", "reeses-compound-2026"),
+        ("reeses peanut butter cups", "reeses-compound-2026"),
+        ("reese's cups", "reeses-compound-2026"),
+        ("reese's", "reeses-compound-2026"),
+        ("reeses", "reeses-compound-2026"),
     ],
     supersedes=[
-        ("coke-zero-2017", "coke-zero-2016", "2017-04-01"),
+        ("reeses-compound-2026", "reeses-classic", "2026-02-17"),
     ],
     markers=[
-        ("tastes like chemicals", "taste"),
-        ("new recipe", "taste"),
+        ("tastes different", "taste"),
+        ("tastes waxy", "taste"),
+        ("tastes like wax", "taste"),
         ("changed the recipe", "taste"),
         ("doesn't taste the same", "taste"),
-        ("tastes different", "taste"),
-        ("watery", "texture"),
-        ("flat", "texture"),
-        ("new can", "packaging"),
-        ("new bottle", "packaging"),
+        ("not real chocolate", "taste"),
+        ("fake chocolate", "taste"),
+        ("compound coating", "taste"),
+        ("waxy", "texture"),
+        ("greasy", "texture"),
+        ("chalky", "texture"),
+        ("new packaging", "packaging"),
+        ("new wrapper", "packaging"),
+        ("shrinkflation", "price"),
         ("price went up", "price"),
         ("too expensive", "price"),
     ],
@@ -242,15 +249,15 @@ def _client(reviews):
 
 def test_resolves_alias_to_variant():
     c = _client([{"url": "u1", "source": "reddit",
-                  "text": "tastes like chemicals now", "published_date": "2017-05-12",
-                  "product_query": "Coke Zero"}])
+                  "text": "tastes waxy now", "published_date": "2026-03-12",
+                  "product_query": "Reese's Peanut Butter Cups"}])
     row = c.fetch_classified()[0]
-    assert row["variant_id"] == "coke-zero-2017"
+    assert row["variant_id"] == "reeses-compound-2026"
 
 def test_post_reform_taste_classified_with_trace():
     c = _client([{"url": "u1", "source": "reddit",
-                  "text": "this tastes like chemicals now", "published_date": "2017-05-12",
-                  "product_query": "Coca-Cola Zero Sugar"}])
+                  "text": "they changed the recipe, this is not real chocolate",
+                  "published_date": "2026-03-12", "product_query": "Reese's"}])
     row = c.fetch_classified()[0]
     assert row["complaint_category"] == "taste"
     assert row["raw_excerpt"]
@@ -259,15 +266,15 @@ def test_post_reform_taste_classified_with_trace():
 
 def test_neutral_review_is_none():
     c = _client([{"url": "u2", "source": "reddit",
-                  "text": "love this drink, perfect", "published_date": "2018-01-01",
-                  "product_query": "Coke Zero"}])
+                  "text": "love these, best candy ever", "published_date": "2026-05-01",
+                  "product_query": "Reese's"}])
     row = c.fetch_classified()[0]
     assert row["complaint_category"] == "none"
 
 def test_pre_reform_complaint_not_flagged_post():
     c = _client([{"url": "u3", "source": "reddit",
-                  "text": "tastes different lately", "published_date": "2016-01-01",
-                  "product_query": "Coke Zero"}])
+                  "text": "tastes different lately", "published_date": "2025-06-01",
+                  "product_query": "Reese's"}])
     trace = c.trace("u3")
     assert not any("post-reformulation" in t for t in trace)
 ```
@@ -485,7 +492,7 @@ def test_output_is_contract_valid():
 def test_known_post_reform_taste_row():
     out = {r["url"]: r for r in classify(FIX)}
     row = out["https://reddit.com/r/post1"]
-    assert row["variant_id"] == "coke-zero-2017"
+    assert row["variant_id"] == "reeses-compound-2026"
     assert row["complaint_category"] == "taste"
     assert any("post-reformulation" in t for t in row["rule_trace"])
 
@@ -499,17 +506,17 @@ def test_neutral_row_is_none():
 ```json
 [
   {"url": "https://reddit.com/r/post1", "source": "reddit",
-   "text": "Honestly this tastes like chemicals now, what happened?",
-   "published_date": "2017-05-12", "product_query": "Coke Zero"},
+   "text": "Honestly the new Reese's tastes waxy now, they changed the recipe. Gross.",
+   "published_date": "2026-03-01", "product_query": "Reese's Peanut Butter Cups"},
   {"url": "https://reddit.com/r/post2", "source": "reddit",
-   "text": "The new recipe is way too watery for me",
-   "published_date": "2017-06-01", "product_query": "Coca-Cola Zero Sugar"},
+   "text": "The coating is so greasy and chalky since the change, not what it used to be",
+   "published_date": "2026-03-15", "product_query": "Reese's"},
   {"url": "https://reddit.com/r/neutral1", "source": "reddit",
-   "text": "Still my favourite drink, never changes",
-   "published_date": "2018-02-02", "product_query": "Coke Zero"},
+   "text": "Still my favourite candy, never gets old",
+   "published_date": "2026-05-02", "product_query": "Reese's"},
   {"url": "https://reddit.com/r/pre1", "source": "reddit",
-   "text": "tastes different lately, not sure why",
-   "published_date": "2016-01-01", "product_query": "Coke Zero"}
+   "text": "tastes different lately, maybe just me",
+   "published_date": "2025-06-01", "product_query": "Reese's"}
 ]
 ```
 
@@ -591,10 +598,10 @@ pytestmark = pytest.mark.skipif(
 def test_real_engine_matches_contract():
     from classifier.px_client import RealPxClient
     reviews = [{"url": "u1", "source": "reddit",
-                "text": "this tastes like chemicals now", "published_date": "2017-05-12",
-                "product_query": "Coke Zero"}]
+                "text": "they changed the recipe, this is not real chocolate",
+                "published_date": "2026-03-12", "product_query": "Reese's"}]
     out = classify(reviews, client=RealPxClient())
-    assert out[0]["variant_id"] == "coke-zero-2017"
+    assert out[0]["variant_id"] == "reeses-compound-2026"
     assert out[0]["rule_trace"]
 ```
 
