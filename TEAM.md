@@ -3,6 +3,21 @@
 Multi-agent system: an **Orchestrator** drives 5 specialist agents that turn a product name
 into a published, sourced complaint-spike alert. See `PRD (1).md` for the pitch & demo script.
 
+## DEMO TARGET (validated ✅) — Hershey / Reese's recipe change
+
+We pivoted from Quest (2016) to a **live 2026** reformulation. Why: Reddit blocks both
+`.json` and Tavily `extract`, so historical Reddit spikes can't be dated. Live news dates
+cleanly via Tavily AND scores higher on "acts on real-time data".
+
+- **Product:** Reese's Peanut Butter Cups (Hershey)
+- **Change:** milk chocolate → cheaper compound coating on several Reese's variants
+- **Timeline:** accusation breaks ~**Feb 17 2026** (inventor's grandson) → backlash builds →
+  Hershey U-turns to classic recipe ~**Apr 1 2026**
+- **Validation:** `python -m scripts.validate "Reese's Peanut Butter Cups" --reform-date 2026-02-17`
+  → 17/30 dated, spike Feb (6) → Apr peak (11). Real grievance text, not neutral reporting.
+- **Prometheux rules now target:** "tastes different/waxy", "changed the recipe", "compound
+  coating vs real chocolate", complaints dated at/after the Feb change. (Teammate C.)
+
 ## Agents (6 total)
 
 | # | Agent | Job | Tool | Owner |
@@ -62,7 +77,7 @@ UI builds against a mock `/run` returning this shape until the real pipeline lan
 
 ## First 30 minutes
 
-- [ ] **You** — pick the demo product (research pending) and VALIDATE the spike is real before anyone builds on it
+- [x] **You** — demo product picked + spike validated (Hershey/Reese's, see above)
 - [ ] **B** — confirm the **cited.md API** at the sponsor booth (top open risk); stub Publisher to return a placeholder URL meanwhile
 - [ ] **C** — confirm how to author + run Prometheux rules; sketch the ontology
 - [ ] **All** — agree the contract above is frozen; commit `TEAM.md`
