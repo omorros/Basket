@@ -12,9 +12,9 @@ category and a human-readable rule-trace explaining why, and the output validate
 the frozen data contract so Agent 4 ingests it without changes.
 
 Two jobs:
-1. **Entity resolution** — collapse variant aliases ("Coke Zero" / "Coca-Cola Zero Sugar")
-   into one variant node; know which variant *supersedes* which (the edge carries the
-   reformulation date).
+1. **Entity resolution** — collapse variant aliases ("Reese's" / "Reese's Peanut Butter Cups"
+   / "Reeses") into one variant node; know which variant *supersedes* which (the edge carries
+   the reformulation date).
 2. **Rule classification + trace** — assign each review a complaint category via declarative
    rules, and emit the rule-trace (the hero moment).
 
@@ -58,6 +58,9 @@ Why this beats an LLM classifier (the pitch): entity resolution is a graph join,
 string-matching; every classification is explainable as a literal rule-trace back to source
 text + date, not "the model said so."
 
+Locked demo target (TEAM.md): Reese's Peanut Butter Cups (Hershey), a live 2026
+reformulation (milk chocolate to cheaper compound coating). Reform date 2026-02-17.
+
 ## The Vadalog rules (5-8, kept lean per PRD risk register)
 
 Facts loaded by the adapter:
@@ -81,10 +84,10 @@ Prometheux provides provenance via `@explain` (per-fact derivation chain) and `@
 (turns a predicate into a readable sentence). So `rule_trace[]` is populated from the engine,
 not written by hand. Target trace:
 ```
-1. "Coke Zero" in the query resolves to variant coke-zero-2017 (rule A).
-2. coke-zero-2017 supersedes coke-zero-2016, reformulated 2017-04-01 (supersedes edge).
-3. Review text contains "tastes like chemicals" -> taste marker (rule B).
-4. Review dated 2017-05-12 >= 2017-04-01 -> post-reformulation taste complaint (rule C).
+1. "Reese's Peanut Butter Cups" in the query resolves to variant reeses-compound-2026 (rule A).
+2. reeses-compound-2026 supersedes reeses-classic, reformulated 2026-02-17 (supersedes edge).
+3. Review text contains "changed the recipe" -> taste marker (rule B).
+4. Review dated 2026-03-01 >= 2026-02-17 -> post-reformulation taste complaint (rule C).
 ```
 
 ## Architecture (de-risked for the hackathon)
