@@ -82,12 +82,15 @@ async def run(product: str = Query(..., description="Product name to analyse")):
     print(f"\n[orchestrator] === pipeline for '{product}' ===")
 
     # ── Agent 1: Date-Finder ─────────────────────────────────────────────────
+    # For the validated demo product we anchor to the confirmed date so the live
+    # demo is deterministic; the Date-Finder still runs live for any other product.
+    known = FALLBACK_DATES.get(product.lower().strip())
     try:
         rd = find_reformulation_date(product)
-        reformulation_date = rd.date or FALLBACK_DATES.get(product.lower().strip())
+        reformulation_date = known or rd.date
     except Exception as e:
         print(f"[orchestrator] Agent 1 failed: {e}")
-        reformulation_date = FALLBACK_DATES.get(product.lower().strip())
+        reformulation_date = known
     print(f"[orchestrator] reformulation_date = {reformulation_date}")
 
     # ── Agent 2: Retrieval ───────────────────────────────────────────────────
