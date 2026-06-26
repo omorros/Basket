@@ -1,0 +1,26 @@
+% classifier/rules.vada
+% Reformulation Sentinel - classification rules (rules A-D).
+% Facts (loaded by the adapter): review/5, alias/2, supersedes/3, marker/2.
+% NOTE: built-in names for string-contains and date-compare are placeholders;
+% confirm exact Vadalog syntax at the Prometheux sponsor booth.
+
+% Rule A: entity resolution - resolve a review to a variant via an alias.
+about(Url, V) :- review(Url, _, _, _, Query), alias(A, V), contains(Query, A).
+
+% Rule B: marker hit - a review mentions a complaint category.
+hit(Url, Cat, P) :- review(Url, _, Text, _, _), marker(P, Cat), contains(Text, P).
+
+% Rule C: date-relative - taste/texture complaint dated after the reformulation.
+post_reform(Url, Cat) :- about(Url, V), hit(Url, Cat, _),
+                         supersedes(V, _, RD), review(Url, _, _, D, _), D >= RD.
+
+% Rule D: classification head (the output predicate).
+classified(Url, V, Cat, D, P) :- about(Url, V), hit(Url, Cat, P), review(Url, _, _, D, _).
+
+@output("classified").
+
+% Provenance + readable trace (the hero moment).
+@explain("console").
+@model("about", "['Url:string','V:string']", "review [Url] is about variant [V]").
+@model("hit", "['Url:string','Cat:string','P:string']", "review [Url] mentions [Cat] via marker [P]").
+@model("post_reform", "['Url:string','Cat:string']", "review [Url] is a post-reformulation [Cat] complaint").
