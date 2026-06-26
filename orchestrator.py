@@ -28,6 +28,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # Our validated agents (Tavily + ClickHouse + classifier).
 from agent.tavily_agent import find_reformulation_date, retrieve_reviews
 from agent.classify import classify_review
+from agent.schemas import ClassifiedReview
 from agent import clickhouse_store as ch
 from agent.aggregate import bucket_by_week, detect_inflection as local_detect
 
@@ -36,6 +37,8 @@ from publisher import publish_alert, publish_alert_stub
 
 # ── Config ──────────────────────────────────────────────────────────────────
 USE_STUB_PUBLISHER = os.environ.get("USE_STUB_PUBLISHER", "true").lower() == "true"
+# Flip to true once C's Prometheux classifier.classify() is live + Reese's-aware.
+USE_REAL_CLASSIFIER = os.environ.get("USE_REAL_CLASSIFIER", "false").lower() == "true"
 # Threshold below which we don't bother publishing an alert.
 PUBLISH_MIN_SEVERITY = 1.2
 # Keeps the demo deterministic if the Date-Finder can't pin a date live.
@@ -45,6 +48,39 @@ app = FastAPI(title="Reformulation Sentinel — Orchestrator")
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
 )
+
+
+def _coerce(d) -> ClassifiedReview:
+    """Normalise a classifier's output (dict OR ClassifiedReview) to the contract.
+
+    Lets C's Prometheux classifier return plain dicts and still flow through
+    ClickHouse + the UI unchanged.
+    """
+    if isinstance(d, ClassifiedReview):
+        return d
+    return ClassifiedReview(
+        url=d.get("url", ""),
+        variant_id=d.get("variant_id", ""),
+        complaint_category=d.get("complaint_category", "none"),
+        published_date=d.get("published_date"),
+        rule_trace=d.get("rule_trace", []) or [],
+        raw_excerpt=d.get("raw_excerpt", "") or d.get("text", ""),
+    )
+
+
+def _classify(review_objs, reformulation_date) -> list:
+    """Agent 3. Prometheux when enabled + available, else our local rules."""
+    if USE_REAL_CLASSIFIER:
+        try:
+            from classifier import classify as prometheux_classify
+            raw = prometheux_classify(
+                [r.to_dict() for r in review_objs], None, reformulation_date
+            )
+            print(f"[orchestrator] Agent 3: Prometheux classified {len(raw)}")
+            return [_coerce(d) for d in raw]
+        except Exception as e:
+            print(f"[orchestrator] Prometheux failed ({e}); using local classifier")
+    return [classify_review(r, reformulation_date) for r in review_objs]
 
 
 def _dedupe_for_ui(classified: list, limit: int = 8) -> list:
@@ -83,8 +119,8 @@ async def run(product: str = Query(..., description="Product name to analyse")):
     if not review_objs:
         raise HTTPException(status_code=404, detail=f"No mentions found for '{product}'.")
 
-    # ── Agent 3: Classifier (our rules; C's Prometheux drops in here) ─────────
-    classified = [classify_review(r, reformulation_date) for r in review_objs]
+    # ── Agent 3: Classifier (Prometheux when enabled, else our local rules) ──
+    classified = _classify(review_objs, reformulation_date)
 
     # ── Agent 4: ClickHouse aggregate + detect (local fallback) ──────────────
     pid = product.lower().strip()
