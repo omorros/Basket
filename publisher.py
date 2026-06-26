@@ -16,10 +16,11 @@ import requests
 from datetime import datetime
 
 SENSO_API_KEY = os.environ["SENSO_API_KEY"]
-SENSO_BASE_URL = "https://apiv2.senso.ai"
+# Confirmed by probing /api/v1/org/me -> 200 (org "Basket"). Auth is X-API-Key, not Bearer.
+SENSO_BASE_URL = "https://apiv2.senso.ai/api/v1"
 
 HEADERS = {
-    "Authorization": f"Bearer {SENSO_API_KEY}",
+    "X-API-Key": SENSO_API_KEY,
     "Content-Type": "application/json",
 }
 
