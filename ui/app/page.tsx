@@ -81,7 +81,6 @@ export default function Home() {
             src="/basket-icon.png"
             alt="Basket"
             className="h-12 w-12"
-            style={{ mixBlendMode: "multiply" }}
           />
           <span
             className="text-3xl font-semibold tracking-tight"
