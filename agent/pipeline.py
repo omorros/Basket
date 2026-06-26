@@ -15,7 +15,7 @@ import sys
 from dotenv import load_dotenv
 
 from .tavily_agent import retrieve_reviews, find_reformulation_date
-from .classify import classify_review
+from .px_classify import classify_reviews  # real Prometheux classifier (Agent 3)
 from .aggregate import bucket_by_week, detect_inflection
 from . import clickhouse_store as ch
 
@@ -30,7 +30,7 @@ def run(product: str) -> dict:
     reform_date = rd.date or FALLBACK_DATES.get(product.lower())
 
     reviews = retrieve_reviews(product, sources=("news", "web"), max_results=20)
-    classified = [classify_review(r, reform_date) for r in reviews]
+    classified = classify_reviews(reviews, reform_date)
 
     # Agent 4: real ClickHouse if configured, else the local stand-in.
     if ch.configured():
