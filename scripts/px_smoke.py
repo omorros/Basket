@@ -37,8 +37,9 @@ def check_prometheux() -> bool:
             "location(L) :- company(_, L).\n"
             '@output("location").\n'
         )
-        px.save_concept(project_id=pid, definition=definition, concept_name="location")
-        px.run_concept(project_id=pid, concept_name="location")
+        px.save_concept(project_id=pid, definition=definition, concept_name="location",
+                        output_predicate="location")
+        px.run_concept(project_id=pid, concept_name="location", persist_outputs=True)
         rows = px.fetch_results(project_id=pid, output_predicate="location")
         print(f"[prometheux] OK: auth works, project={pid}")
         print(f"[prometheux] fetch_results type={type(rows).__name__}, value={rows!r}")

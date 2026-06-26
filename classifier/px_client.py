@@ -107,19 +107,24 @@ def _facts(reviews: List[dict], seeds: Seeds) -> str:
 def _rows_from_results(results: object) -> List[list]:
     """Normalize prometheux_chain.fetch_results output into a list of column-lists.
 
-    The SDK return shape varies by version (bare list of tuples/dicts, or an
-    object exposing .data / .results / .rows). This stays tolerant so the live
-    swap does not hinge on one exact shape.
+    Confirmed live shape (SDK 0.2.14):
+      {'predicate': ..., 'results': {'facts': [[...], ...], 'columnNames': [...]},
+       'pagination': {'has_next': bool, ...}}
+    Falls back gracefully if a future version returns a bare list.
     """
-    payload = results
-    for attr in ("data", "results", "rows", "result_rows", "tuples"):
-        if hasattr(payload, attr):
-            payload = getattr(payload, attr)
-            break
-    if isinstance(payload, dict):
-        payload = payload.get("data") or payload.get("rows") or payload.get("results") or []
+    facts: object = []
+    if isinstance(results, dict):
+        inner = results.get("results")
+        if isinstance(inner, dict):
+            facts = inner.get("facts", [])
+        else:
+            facts = results.get("facts") or results.get("data") or results.get("rows") or []
+    elif isinstance(results, (list, tuple)):
+        facts = results
+    else:
+        facts = getattr(results, "facts", None) or []
     out: List[list] = []
-    for row in payload or []:
+    for row in facts or []:
         if isinstance(row, dict):
             out.append(list(row.values()))
         elif isinstance(row, (list, tuple)):
@@ -127,6 +132,12 @@ def _rows_from_results(results: object) -> List[list]:
         else:
             out.append([row])
     return out
+
+
+def _has_next(results: object) -> bool:
+    if isinstance(results, dict):
+        return bool(results.get("pagination", {}).get("has_next"))
+    return False
 
 
 class RealPxClient:
@@ -162,22 +173,39 @@ class RealPxClient:
             output_predicate="classified",
         )
 
+    @staticmethod
+    def _retry(fn, tries: int = 12, delay: float = 8.0):
+        """The engine runs one job at a time; back off and retry while it is busy."""
+        import time
+        last = None
+        for _ in range(tries):
+            try:
+                return fn()
+            except Exception as e:  # noqa: BLE001
+                last = e
+                if "ENGINE_BUSY" in str(e) or "busy" in str(e).lower():
+                    time.sleep(delay)
+                    continue
+                raise
+        raise last  # type: ignore[misc]
+
     def _fetch_all(self, predicate: str) -> List[list]:
         rows, page, size = [], 1, 200
         while True:
-            res = self._px.fetch_results(
+            res = self._retry(lambda: self._px.fetch_results(
                 project_id=self._project, output_predicate=predicate,
                 page=page, page_size=size,
-            )
-            batch = _rows_from_results(res)
-            rows.extend(batch)
-            if len(batch) < size:
+            ))
+            rows.extend(_rows_from_results(res))
+            if not _has_next(res):
                 break
             page += 1
         return rows
 
     def run(self) -> None:
-        self._px.run_concept(project_id=self._project, concept_name="classified")
+        self._retry(lambda: self._px.run_concept(
+            project_id=self._project, concept_name="classified", persist_outputs=True,
+        ))
         # engine output rows: [Url, Variant, Category, Phrase, Date, ReformDate, Phase]
         engine = self._fetch_all("classified")
         by_url: Dict[str, List[list]] = {}
