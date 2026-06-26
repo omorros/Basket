@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 20% 99%;       /* #FBFBFD page */
+    --foreground: 240 6% 11%;        /* #1D1D1F text */
+    --card: 0 0% 100%;               /* white surfaces */
+    --card-foreground: 240 6% 11%;
+    --muted: 240 6% 96%;             /* fills */
+    --muted-foreground: 240 2% 44%;  /* #6E6E73 secondary */
+    --primary: 211 100% 45%;         /* #0071E3 system blue */
+    --primary-foreground: 0 0% 100%;
+    --accent: 211 100% 45%;
+    --critical: 4 78% 52%;           /* #DC2B25 spike red, used sparingly */
+    --border: 240 11% 91%;           /* #E5E5EA hairline */
+    --input: 240 11% 89%;
+    --ring: 211 100% 45%;
+    --radius: 0.875rem;              /* 14px, Apple-soft */
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "ss01", "cv01";
+    -webkit-font-smoothing: antialiased;
+  }
+  .tnum { font-variant-numeric: tabular-nums; }
+}

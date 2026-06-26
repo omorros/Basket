@@ -25,15 +25,15 @@ cleanly via Tavily AND scores higher on "acts on real-time data".
 | 1 | Date-Finder | From product name, find *if/when* it was reformulated | Tavily | You |
 | 2 | Retrieval | Query + fetch + clean reviews (Reddit/retailer/forums) | Tavily | You |
 | 3 | Classifier | Entity-resolve variants + rule-classify w/ trace | Prometheux | C |
-| 4 | Aggregator/Detector | Bucket volume by week×category, detect inflection | ClickHouse | C |
+| 4 | Aggregator/Detector | Bucket volume by week×category, detect inflection | ClickHouse | You ✅ |
 | 5 | Publisher | On inflection, emit sourced report → public URL | cited.md | B |
 | 0 | Orchestrator | Run the loop, pass data agent→agent, fire Publisher | — | B |
 
 ## Ownership
 
-- **You** — Date-Finder + Retrieval (Tavily) · data validation · UI (Next.js dashboard)
+- **You** — Date-Finder + Retrieval (Tavily) · data validation · UI (Next.js dashboard) · **ClickHouse Aggregator/Detector ✅**
 - **B** — Orchestrator (`/run?product=`) · cited.md Publisher
-- **C** — Prometheux Classifier · ClickHouse Aggregator/Detector
+- **C** — Prometheux Classifier
 
 ## THE DATA CONTRACT (freeze this — everyone builds against it with mocks)
 
@@ -75,9 +75,32 @@ GET /run?product=<name>
 
 UI builds against a mock `/run` returning this shape until the real pipeline lands.
 
+## Agent 4 — ClickHouse (DONE ✅, ready to integrate)
+
+Live and working: `agent/clickhouse_store.py`. Stores classified complaints in one
+`complaints` MergeTree table, runs the week×category aggregation, and detects the
+inflection (peak vs pre-reformulation baseline) in SQL. Re-runs are idempotent via
+`uniqExact(source_url)`.
+
+**How B's orchestrator calls it** (one function, returns the contract shapes):
+
+```python
+from agent import clickhouse_store as ch
+buckets, inflection = ch.aggregate_and_detect(product_id, classified_reviews, reformulation_date)
+# product_id: stable slug (we use product.lower().strip())
+# classified_reviews: list[ClassifiedReview] from Agent 3
+```
+
+If ClickHouse is unreachable the orchestrator already falls back to `agent/aggregate.py`
+(same shapes), so the chart never blanks.
+
+**Setup (.env):** `CLICKHOUSE_HOST`, `CLICKHOUSE_PASSWORD` (see `.env.example`).
+**Verify anytime:** `python -m scripts.clickhouse_check "Reese's Peanut Butter Cups" --reform-date 2026-02-17`
+
 ## First 30 minutes
 
 - [x] **You** — demo product picked + spike validated (Hershey/Reese's, see above)
+- [x] **You** — ClickHouse Aggregator/Detector built, live, and integrated ✅
 - [ ] **B** — confirm the **cited.md API** at the sponsor booth (top open risk); stub Publisher to return a placeholder URL meanwhile
 - [ ] **C** — confirm how to author + run Prometheux rules; sketch the ontology
 - [ ] **All** — agree the contract above is frozen; commit `TEAM.md`
