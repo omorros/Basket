@@ -1,0 +1,14 @@
+[
+  {"url": "https://reddit.com/r/post1", "source": "reddit",
+   "text": "Honestly the new Reese's tastes waxy now, they changed the recipe. Gross.",
+   "published_date": "2026-03-01", "product_query": "Reese's Peanut Butter Cups"},
+  {"url": "https://reddit.com/r/post2", "source": "reddit",
+   "text": "The coating is so greasy and chalky since the change, not what it used to be",
+   "published_date": "2026-03-15", "product_query": "Reese's"},
+  {"url": "https://reddit.com/r/neutral1", "source": "reddit",
+   "text": "Still my favourite candy, never gets old",
+   "published_date": "2026-05-02", "product_query": "Reese's"},
+  {"url": "https://reddit.com/r/pre1", "source": "reddit",
+   "text": "tastes different lately, maybe just me",
+   "published_date": "2025-06-01", "product_query": "Reese's"}
+]

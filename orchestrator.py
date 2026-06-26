@@ -28,7 +28,6 @@ from fastapi.middleware.cors import CORSMiddleware
 # Our validated agents (Tavily + ClickHouse + classifier).
 from agent.tavily_agent import find_reformulation_date, retrieve_reviews
 from agent.classify import classify_review
-from agent.schemas import ClassifiedReview
 from agent import clickhouse_store as ch
 from agent.aggregate import bucket_by_week, detect_inflection as local_detect
 
@@ -50,34 +49,15 @@ app.add_middleware(
 )
 
 
-def _coerce(d) -> ClassifiedReview:
-    """Normalise a classifier's output (dict OR ClassifiedReview) to the contract.
-
-    Lets C's Prometheux classifier return plain dicts and still flow through
-    ClickHouse + the UI unchanged.
-    """
-    if isinstance(d, ClassifiedReview):
-        return d
-    return ClassifiedReview(
-        url=d.get("url", ""),
-        variant_id=d.get("variant_id", ""),
-        complaint_category=d.get("complaint_category", "none"),
-        published_date=d.get("published_date"),
-        rule_trace=d.get("rule_trace", []) or [],
-        raw_excerpt=d.get("raw_excerpt", "") or d.get("text", ""),
-    )
-
-
 def _classify(review_objs, reformulation_date) -> list:
-    """Agent 3. Prometheux when enabled + available, else our local rules."""
+    """Agent 3. Prometheux (live engine or its Reese's mock) when enabled,
+    else our local regex rules."""
     if USE_REAL_CLASSIFIER:
         try:
-            from classifier import classify as prometheux_classify
-            raw = prometheux_classify(
-                [r.to_dict() for r in review_objs], None, reformulation_date
-            )
-            print(f"[orchestrator] Agent 3: Prometheux classified {len(raw)}")
-            return [_coerce(d) for d in raw]
+            from agent.px_classify import classify_reviews
+            out = classify_reviews(review_objs, reformulation_date)
+            print(f"[orchestrator] Agent 3: Prometheux classified {len(out)}")
+            return out
         except Exception as e:
             print(f"[orchestrator] Prometheux failed ({e}); using local classifier")
     return [classify_review(r, reformulation_date) for r in review_objs]
