@@ -3,6 +3,7 @@ tavily-python>=0.5.0          # Agents 1-2: Date-Finder + Retrieval
 python-dotenv>=1.0.0
 clickhouse-connect>=0.7.0     # Agent 4: ClickHouse Aggregator/Detector
 
-# --- Teammate B (orchestrator HTTP wrapper) ---
-# fastapi
-# uvicorn[standard]
+# Orchestrator (Agent 0) + Senso Publisher (Agent 5)
+fastapi
+uvicorn[standard]
+requests                      # publisher.py -> Senso API
